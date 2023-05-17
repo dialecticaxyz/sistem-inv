@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/estylo.css">
+<title>Registro Inventario Excel</title>
+<style type="text/css">
+.inportExport{
+	display: flex;
+	justify-content: space-evenly;
+	margin: 10px;
+}
+.contendTable{
+	width: 100%;
+	overflow-x: scroll;
+	height: calc(100vh - 120px);
+}
+.nota{
+	text-align: center;
+	padding: 10px;
+}
+</style>
+</head>
+<body onload="startDB();">
+<div class="conteMenu">
+	<span class="icon back" onclick="window.history.back()"></span>
+	<div class="titMenu">CARGAR INVENTARIO DESDE EXEL</div>
+	<span></span>
+</div>
+
+<div class="inportExport">
+	<div>
+	  <label for="archivoexcel" class="btn-material">SELECIONE EXEL</label>
+	  <input type="file" name="archivoexcel" id="archivoexcel" style="display: none;">
+	</div>
+	<div>
+		<span onclick="guardarInv()" class="btn-material">REGISTRAR EXEL</span>
+	</div>
+</div>
+	
+<div class="nota">NOTA: El identificador es el numero (N°)</div> 
+<div class="contendTable">    
+	<table class="tablaVenta">
+		<thead>
+		  <tr>
+			  <th>N°</th>
+			  <th>Nombre</th>
+			  <th>Unidad de <br> Medida</th>
+			  <th>Precio <br> Lista</th>
+			  <th>P/U <br> Contado (15%)</th>
+			  <th>P/U <br> credito (10%)</th>
+			  <th>Marca</th>
+			  <th>P/U <br> compra</th>
+			  <th>Cantidad</th>
+		  </tr>
+		</thead>
+		<tbody id="itemCompra"></tbody>
+	</table>
+</div> 
+
+<script src="../js/apiBakend.js"></script>
+<script src="../jsEx/xlsx.full.min.js"></script>
+<script src="../jsEx/app.js"></script>
+<script src="../js/mainDB.js"></script>
+<script>
+/*datos resividos de app.js lectura de exel*/	
+var items = []
+function renderExel(dat){
+	for (let i = 1; i < dat.length; i++) {
+		const fila = dat[i];
+		items.push({
+			"id":"item"+fila[0],
+			"uniCom":"",
+			"produ":fila[1]==null?"":fila[1],
+			"marca":fila[6]==null?"":fila[6],
+			"cant":fila[8]==null?0:parseFloat(fila[8]),
+			"unidad":fila[2]==null?"":fila[2],
+			"puComp":fila[7]==null?0:parseFloat(fila[7]),
+			"puVent":fila[3]==null?0:parseFloat(fila[3]),
+			"puCont":fila[4]==null?0:parseFloat(fila[4]),
+			"puCret":fila[5]==null?0:parseFloat(fila[5]),
+		})
+	}
+	rederItem()
+}
+function rederItem(){
+  var outerHTML = '';
+	for (let i = 0; i < items.length; i++) {
+		const el = items[i];
+		outerHTML += 
+    `<tr>
+      <td>${i+1}</td>
+      <td>${el.produ}</td>
+      <td>${el.unidad}</td>
+      <td>${el.puVent}</td>
+      <td>${el.puCont}</td>
+      <td>${el.puCret}</td>
+		  <td>${el.marca}</td>
+		  <td>${el.puComp}</td>
+		  <td>${el.cant}</td>
+    </tr>	`  
+	}
+  document.querySelector("#itemCompra").innerHTML = outerHTML;
+}
+/*datos resividos de app.js lectura de exel*/
+
+/** subir itemes nuevos ADMIN **/
+async function guardarInv(){
+  loadData()
+	for (let i = 0; i < items.length; i++) {
+		var item = items[i];
+    let crea = await createdItem(item)
+    if(crea=="created"){
+			await write_DB(item,'inventario')
+    	console.log("guardando......")
+    }
+		document.getElementById("conter").textContent = i+1
+	}
+	console.log("guardado local....")
+  successDat()
+}
+/** subir itemes nuevos ADMIN **/
+
+function init_m(){ }
+</script>
+</body>
+</html>

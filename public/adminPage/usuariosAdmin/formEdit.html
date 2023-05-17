@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es" >
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>EDITAR</title>
+<link rel="stylesheet" href="../css/estylo.css">
+</head>
+<style>
+.btn-material{width: 100px;padding: 7px;}
+</style>
+<body onload="startDB()">
+<div class="conteMenu">
+  <span class="icon back" onclick="window.history.back()"></span>
+  <div class="titMenu">FORMULARIO DE EDICION</div>
+  <span></span>
+</div>
+
+<div class="formularioV1">
+  <div class="contInput">
+    <input data-user id="nom" class="input_ef" type="text" placeholder=" "/>
+    <label class="label_ef">Nombre</label>
+  </div>
+  <div class="contInput">
+    <input data-user id="cel" class="input_ef" type="number" placeholder=" "/>
+    <label class="label_ef">Celular</label>
+  </div>
+  <div class="botones">
+    <button class="btn-material verde" id="btnGuar" onclick="editar()">Editar</button>
+    <button class="btn-material red" id="btnGuar" onclick="eliminar()">Eliminar</button>
+  </div>
+</div>
+
+<script src="../js/mainDB.js"></script>
+<script src="../js/apiBakend.js"></script>
+<script>
+let userIDedit = storage('userIDedit')
+
+async function editar(){
+  loadData() 
+  let edit = await form_to_json("user")
+  let up = await dataUpdateLC(userIDedit,'administrador',edit)
+  if(up){  successDat(true) }
+}
+
+async function eliminar(){
+  let r = prompt("esta seguro de eliminar ..?")
+  if(r=="si"){
+    loadData()
+    let del = await deleteUser(userIDedit)
+    console.log(del)
+    if(del=="delet"){
+      let dl = await del_DB(userIDedit,"usuario")
+      if(dl){ successDat(true) }
+    }
+  }
+}
+
+async function init_m(){
+  let al = await read_ID_DB(userIDedit,'usuario')
+  await json_to_from("user",al)
+}
+</script>
+</body>
+</html>

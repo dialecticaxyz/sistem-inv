@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" >
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>REGISTRAR</title>
+<link rel="stylesheet" href="../css/estylo.css">
+</head>
+<style>
+.btn-material{width: 180px;padding: 7px;}
+.tituloForm{  margin-bottom: -20px; }
+</style>
+<body onload="startDB()">
+<div class="conteMenu">
+  <span></span>
+  <div class="titMenu">REGISTRAR ADMINISTRADOR TEMPORAL</div>
+  <span></span>
+</div>
+
+<div class="formularioV1">
+  <div class="contInput">
+    <input data-userReg id="nom" required class="input_ef" type="text" placeholder=""/>
+    <label class="label_ef">Nombre</label>
+  </div>
+  <div class="contInput">
+    <input data-userReg id="cel" required class="input_ef" type="number" placeholder=""/>
+    <label class="label_ef">Celular</label>
+  </div>
+  <div class="contInput">
+    <input data-userReg id="email" required class="input_ef" type="email" placeholder=""/>
+    <label class="label_ef">Correo</label>
+  </div>
+  <div class="contInput">
+    <input data-userReg id="password" required class="input_ef" type="password" placeholder=""/>
+    <label class="label_ef">Contraseña</label>
+  </div>
+
+  <div class="botones">
+    <button class="btn-material info" id="btnGuar" onclick="registrar()">REGISTRAR</button>
+  </div>
+
+</div>
+
+<script src="../js/mainDB.js"></script>
+<script>
+let url = location.href.split("/")[0]+"//"+location.href.split("/")[2]
+function createdAdminInit(dat){
+  return new Promise(function(resolve,reject){
+    fetch(url+`/createdAdminInit`,{method:'post',headers:{'Accept':'application/json,text/plain','Content-Type':'application/json','x-access-token':""},
+      body: JSON.stringify(dat)
+      }).then(rsp=>{ if(rsp.ok){ rsp.json().then(data=>{ resolve(data) }) }  }
+    );
+  })
+}
+
+async function registrar(){
+  loadData()
+  let val = await form_to_json("userReg")
+  let reg = await createdAdminInit(val)
+  if(reg.std=="success"){
+    localStorage.setItem("datUser",JSON.stringify(reg) );
+    successDat()
+  }else{
+    alert("existe Usuarios");
+    successDat()
+  }  
+}
+
+async function init_m(){ }
+</script>
+</body>
+</html>

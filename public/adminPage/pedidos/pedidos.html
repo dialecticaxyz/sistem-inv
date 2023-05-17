@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedidos</title>
+<link href="../css/estylo.css" rel="stylesheet" type="text/css" media="all" />
+<style>
+.bs{text-align: end;}
+.contenTable{ height: calc(100vh - 50px);}
+.todoFecha{color: white;}
+.inputDate{ margin-bottom: 0px;}
+.pickCalendar{ height: 25px;}
+#fechaVentas_Txt{color: white;}
+</style>
+</head>
+<body onload="startDB();">
+<div class="conteMenu">
+  <span class="icon back" onclick="window.history.back()"></span>
+  <span onclick="sincroDBventas()" class="icon cloud-download-alt"></span>
+  <select data-filvent id="vendedores" onchange="saveText(event,true)"></select>
+  <div class="inputDate">
+    <div id="fechaVentas_Txt"></div>
+    <input data-filvent id="fechaVentas" onchange="saveText(event,true)" class="pickCalendar" type='date'/>
+  </div>
+  <div>
+    <label class="todoFecha" for="todoFecha">Todos Dias</label>
+    <input data-filvent type="checkbox" onchange="checkbox(event,true)" id="todoFecha" >  
+  </div>
+  <span id="conection" class=""></span>   
+  <span onclick="listVer()" class="icon menuSvg ojo"></span>  
+</div>  
+
+<div id="contedOcultador" class="contedOcultador"></div>
+
+<div class="contenTable">
+  <table onclick="oculVer()">
+    <thead>
+      <tr id="headColm">
+        <th>N°</th>
+        <th >Vendedor</th>
+        <th>Cliente</th>
+        <th>Acuenta</th>
+        <th>Saldo</th>
+        <th onclick="renderVentas(true,'num','total')">Total</th>
+        <th onclick="renderVentas(true,'txt','fechVent')" >fecha</th>
+        <th>ver</th>
+        <th>pdf</th>
+      </tr>
+    </thead>
+    <tbody id="listaDitem"></tbody>
+  </table>
+</div>
+
+<script src="../js/apiBakend.js"></script>
+<script src="../js/mainDB.js"></script>
+<script>
+async function cargaVendedores(){
+  return new Promise(function(resolve,reject){  
+    read_DB('usuario').then((dat)=>{
+      let outerHTMLvendor = `<option value="todos">Todos</option>`;
+      for (let i = 0; i < dat.length; i++){
+        const el = dat[i];
+        //if(el.rol=="admin"){ continue }
+        outerHTMLvendor += `<option value="${el.nom}">${el.nom}</option> `
+      }
+      document.querySelector("#vendedores").innerHTML = outerHTMLvendor;
+    })
+    resolve(true)
+  })
+}
+
+var listVen = []
+async function renderVentas(ord,typ,elm){
+  listVen = []
+  let dat = await read_DB('ventas')
+  //filtro
+  let df = await storageJsonSetup("filvent",{"todoFecha":false,"fechaVentas":fecActInp,"vendedores":"todos"})
+  for (let i = 0; i < dat.length; i++) {
+    const el = dat[i];
+    let f1 = await itemFilter(dateTOinput(el.fechVent),df["todoFecha"],df["fechaVentas"],listVen,el)
+    if(!f1){ continue }  
+    let f2 = await itemFilter((el.dataVenden)["nom"],(df["vendedores"]=="todos"),df["vendedores"],listVen,el)
+    if(!f2){ continue }
+  }
+  //filtro
+  //ordenar
+  listVen = await sortTable(ord,typ,elm,listVen)
+  //ordenar
+  var outerHTML = '';
+  for (let i = 0; i < listVen.length; i++) {
+    let el = listVen[i];
+    outerHTML += 
+    `<tr id="${el.id}">
+      <td>${i+1}</td>
+      <td>${(el.dataVenden).nom}</td>
+      <td data-itm id="ref_${el.id}">${(el.cliente).cli}</td>
+      <td class="bs">${el.acuenta}</td>
+      <td class="bs">${el.saldo}</td>
+      <td class="bs">${el.total}</td>
+      <td>${timeToMesDia(el.fechVent)}</td>
+      <td>
+        <span onclick="verVenta('${el.id}')" class="icon Eyes">
+      </td>
+      <td>
+        <span onclick="verPdf('${el.id}')" class="icon pdf1">
+      </td>
+    </tr>`
+  }
+  document.querySelector("#listaDitem").innerHTML = outerHTML;
+  manejoColumnas("tablaPedidos")
+}
+
+function verPdf(idVent){
+  localStorage.setItem('idVenta', idVent);
+  lnk("../pedidos/pdfVenta")
+}
+function verVenta(idVent){
+  localStorage.setItem('idVenta', idVent);
+  lnk("../pedidos/formInfo_venta")
+}
+
+async function init_m(){ 
+  let fil = await storageJsonSetup("filvent",{"todoFecha":false,"fechaVentas":fecActInp,"vendedores":"todos"})
+  await json_to_from("filvent",fil)
+  await cargaVendedores()
+  await renderVentas()
+  openSocket() 
+}   
+
+</script>
+</body>
+</html>

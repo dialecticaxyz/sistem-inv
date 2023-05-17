@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INVENTARIO</title>
+<link href="../css/estylo.css" rel="stylesheet" type="text/css" media="all" />
+<style>
+.info{width: 100px;}  
+.ajusteInv{
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: 10px;
+}
+.ajusteInv input{ width: 100px; }
+</style>
+</head>
+<body onload="startDB();">
+<div class="conteMenu">
+  <span class="icon back" onclick="window.history.back()"></span>
+  <div onclick="editarItem()" class="btn-material">Editar Datos</div> 
+  <span></span>  
+</div> 
+
+<div class="formularioV1">
+  <div class="contInput">
+    <input data-itemN id="marca" class="input_ef" type="text" placeholder=" " />
+    <label class="label_ef">Marca</label>
+  </div>
+  <div class="contInput">
+    <input data-itemN id="produ" class="input_ef" type="text" placeholder=" " />
+    <label class="label_ef">Producto</label>
+  </div>
+  <div class="contInput">
+    <input data-itemN id="unidad" class="input_ef" type="text" placeholder=" "/>
+    <label class="label_ef">Unidad de Medida</label>
+  </div>
+  <div class="contInput">
+    <input data-itemN id="cant" class="input_ef" type="number" placeholder=" "/>
+    <label class="label_ef">Unidades disponibles</label>
+  </div>
+  <div class="ajusteInv">
+    <div class="contInput">
+      <input id="ajuste" class="input_ef" type="number" placeholder=" " />
+      <label class="label_ef">Ajuste</label>
+    </div>
+    <button onclick="mas_compra()" class="btn-material info">MAS</button>
+    <button onclick="menos_vender()" class="btn-material info">MENOS</button>
+  </div>
+  <div class="contInput">
+    <input data-itemN id="puComp" class="input_ef" type="number" placeholder=" " />
+    <label class="label_ef">P/U Compra</label>
+  </div>
+  <div class="contInput">
+    <input data-itemN id="puVent" onkeyup="puVent(event)" class="input_ef" type="number" placeholder=" " />
+    <label class="label_ef">P/U Venta</label>
+  </div>
+  <div class="contInput">
+    <input data-itemN id="puCont" onkeyup="puCont(event)" class="input_ef" type="number" placeholder=" " />
+    <label class="label_ef">P/U Contado (15%)</label>
+  </div>
+  <div class="contInput">
+    <input data-itemN id="puCret" onkeyup="puCret(event)" class="input_ef" type="number" placeholder=" " />
+    <label class="label_ef">P/U Credito (10%)</label>
+  </div>
+  <div class="botones">
+    <div onclick="borrarInventario()" class="btn-material danger">Borrar Item</div> 
+  </div>
+</div>
+
+<script src="../js/apiBakend.js"></script>
+<script src="../js/mainDB.js"></script>
+<script>
+function puVent(e){
+  let p = ValNum(e.target.id)
+  document.getElementById("puCont").value=(p*(1-0.15)).toFixed(1)
+  document.getElementById("puCret").value=(p*(1-0.1)).toFixed(1)
+}
+function puCont(e){
+  let p = ValNum(e.target.id)
+  document.getElementById("puVent").value=(p/0.85).toFixed(1)
+  document.getElementById("puCret").value=((p/0.85)*(1-0.1)).toFixed(1)
+}
+function puCret(e){
+  let p = ValNum(e.target.id)
+  document.getElementById("puVent").value=(p/0.90).toFixed(1)
+  document.getElementById("puCont").value=((p/0.90)*(1-0.15)).toFixed(1)
+}
+
+var idItem = storage("idItem")
+/** editar item solo datos **/
+async function editarItem(){
+  let r = confirm("Esta Seguro de editar..?")
+  if(r){
+    loadData()
+    let valF = await form_to_json('itemN')
+    valF["id"] = idItem
+    let up = await updateItem(valF)
+    if(up=="update"){
+      update_DB(idItem,valF,'inventario').then(()=>{ successDat(true) })
+    }
+  }
+}
+/** editar item solo datos **/
+/* menos */
+async function menos_vender(){
+  let r = confirm("Esta Seguro de Reducir..?")
+  if(r){
+    loadData()
+    let dat = {}
+    dat["id"] = idItem
+    dat["ajuste"] = ValNum("ajuste") 
+    let up = await itemCantMenos(dat)
+    if(up=="update"){
+      up_inventario_venta(idItem,dat["ajuste"]).then(()=>{ successDat(true) })
+    }
+  }
+}  
+/* menos */
+/* mas */
+async function mas_compra(){
+  let r = confirm("Esta Seguro de Incrementar..?")
+  if(r){
+    loadData()
+    let dat = {}
+    dat["id"] = idItem
+    dat["ajuste"] = ValNum("ajuste")
+    let up = await itemCantMas(dat)
+    if(up=="update"){
+      up_inventario_venta(idItem,-dat["ajuste"]).then(()=>{ successDat(true) })
+    }
+  }
+}  
+/* mas */
+
+/** borrar en la nube y local **/
+async function borrarInventario(){
+  let r = prompt("Esta seguro de borrar");
+  if(r=="si"){
+    loadData()
+    deleteItem(idItem).then((d) => {
+      if(d=="delet"){ del_DB(idItem,'inventario').then(()=>{ successDat(true)  }) }
+    }).catch((error)=>{ alert(error) });
+  }
+}
+/** borrar en la nube y local **/
+
+async function init_m(){
+  let item = await read_ID_DB(idItem,'inventario')
+  await json_to_from("itemN",item)
+}
+</script> 
+</body>
+</html>

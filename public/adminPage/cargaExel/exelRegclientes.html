@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/estylo.css">
+<title>Registro clientes Excel</title>
+<style type="text/css">
+.inportExport{
+	display: flex;
+	justify-content: space-evenly;
+	margin: 10px;
+}
+.contendTable{
+	width: 100%;
+	overflow-x: scroll;
+	height: calc(100vh - 120px);
+}
+.nota{
+	text-align: center;
+	padding: 10px;
+}
+</style>
+</head>
+<body onload="startDB();">
+<div class="conteMenu">
+	<span class="icon back" onclick="window.history.back()"></span>
+	<div class="titMenu">CARGAR CLIENTES DESDE EXEL</div>
+	<span></span>
+</div>
+
+<div class="inportExport">
+	<div>
+	  <label for="archivoexcel" class="btn-material">SELECIONE EXEL</label>
+	  <input type="file" name="archivoexcel" id="archivoexcel" style="display: none;">
+	</div>
+	<div>
+		<span onclick="guardarInv()" class="btn-material">REGISTRAR EXEL</span>
+	</div>
+</div>
+	
+<div class="nota">NOTA: El identificador es el numero (N°)</div> 
+<div class="contendTable">    
+	<table class="tablaVenta">
+		<thead>
+		  <tr>
+			  <th>N°</th>
+			  <th>Farmacia</th>
+			  <th>Direccion</th>
+			  <th>Zona</th>
+			  <th>Nit</th>
+			  <th>Celular</th>
+		  </tr>
+		</thead>
+		<tbody id="itemCompra"></tbody>
+	</table>
+</div> 
+<script src="../jsEx/xlsx.full.min.js"></script>
+<script src="../jsEx/app.js"></script>
+<script src="../js/apiBakend.js"></script>
+<script src="../js/mainDB.js"></script>
+<script>
+/*datos resividos de app.js lectura de exel*/	
+var items = []
+function renderExel(dat){
+	for (let i = 1; i < dat.length; i++) {
+		const fila = dat[i];
+		items.push({
+			"id":"cliente"+fila[0],
+			"cli":fila[1]==null?"":fila[1],
+			"dir":fila[2]==null?"":fila[2],
+			"zona":fila[3]==null?"":fila[3],
+			"nit":fila[4]==null?"":fila[4],
+			"cel":fila[5]==null?"":fila[5],
+		})
+	}
+	rederItem()
+}
+function rederItem(){
+  var outerHTML = '';
+	for (let i = 0; i < items.length; i++) {
+		const el = items[i];
+		outerHTML += 
+    `<tr>
+		  <td>${i+1}</td>
+      <td>${el.cli}</td>
+      <td>${el.dir}</td>
+      <td>${el.zona}</td>
+      <td>${el.nit}</td>
+      <td>${el.cel}</td>
+    </tr>`  
+	}
+  document.querySelector("#itemCompra").innerHTML = outerHTML;
+}
+/*datos resividos de app.js lectura de exel*/
+
+/** subir itemes nuevos ADMIN **/
+async function guardarInv(){
+  loadData()
+	for (let i = 0; i < items.length; i++) {
+		var item = items[i];
+    let crea = await createdCliente(item)
+    if(crea=="created"){
+			await write_DB(item,'clientes')
+    	console.log("guardando......")
+    }
+		document.getElementById("conter").textContent = i+1
+	}
+	console.log("guardado local....")
+  successDat()
+}
+/** subir itemes nuevos ADMIN **/
+
+function init_m(){}
+</script>
+</body>
+</html>

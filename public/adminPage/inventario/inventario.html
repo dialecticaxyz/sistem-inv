@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INVENTARIO</title>
+<link href="../css/estylo.css" rel="stylesheet" type="text/css" media="all" />
+<style>
+.cantPed{width: 50px;}
+#conection{margin-left: 10px;}
+.cloud-download-alt{margin-right: 25px;}
+.buscador{display: flex;justify-content: center;}
+.BORRAR{margin-left: 15px;margin-top: 2px;margin-right: 10px;}
+</style>
+</head>
+<body onload="startDB();">
+<div class="conteMenu">
+  <span class="icon back" onclick="window.history.back()"></span>
+  <span id="conection"></span>   
+  <div onclick="lnk('../inventario/formReg_inventario')" class="btn-material">Nuevo Producto</div> 
+  <span onclick="sincroDBinventario()" class="icon cloud-download-alt"></span>
+  <span onclick="listVer()" class="icon menuSvg ojo"></span>  
+</div>   
+
+<div class="buscador">
+  <input class="input_ef" size="10" type="text" id="buscar" onkeyup="filter()" placeholder="Buscar Producto">  
+  <span class="icon  BORRAR" onclick="limpiarBus()"></span>
+</div>
+
+<div class="secionCheck">
+  <div id="contedOcultador" class="contedOcultador"></div>
+</div>
+
+<div class="contenTable">
+  <table  onclick="oculVer()">
+    <thead>
+      <tr id="headColm">
+        <th onclick="renderDatos(true,'txt','produ')">Producto</th>
+        <th onclick="renderDatos(true,'txt','marca')">Marca</th>
+        <th onclick="renderDatos(true,'txt','unidad')">Unidad <br> Medida</th>
+        <th onclick="renderDatos(true,'num','puComp')">PU <br> Compra</th>
+        <th onclick="renderDatos(true,'num','puVent')">PU <br> Venta</th>
+        <th onclick="renderDatos(true,'num','puCret')">PU <br> Credito</th>
+        <th onclick="renderDatos(true,'num','puCont')">PU <br> Contado</th>
+        <th>Edit.</th>
+        <th onclick="renderDatos(true,'num','cant')">Dis.</th>
+      </tr>
+    </thead>
+    <tbody id="listaDitem"></tbody>
+  </table>
+</div>
+
+<script src="../js/apiBakend.js"></script>
+<script src="../js/mainDB.js"></script>
+<script>
+var items = []
+async function renderDatos(ord,typ,elm){
+  let dat = await read_DB('inventario')
+  dat = await sortTable(ord,typ,elm,dat)
+  var outerHTML = '';
+  for (let i = 0; i < dat.length; i++){
+    const el= dat[i];
+    outerHTML += 
+    `<tr id="${el.id}">
+      <td>${el.produ}</td>
+      <td>${el.marca}</td>
+      <td>${el.unidad}</td>
+      <td>${(el.puComp).toFixed(2)}</td>
+      <td>${(el.puVent).toFixed(2)}</td>
+      <td>${(el.puCret).toFixed(2)}</td>
+      <td>${(el.puCont).toFixed(2)}</td>
+      <td>
+        <span onclick="editar('${el.id}')" class="icon PEN">
+      </td>
+      <td>${el.cant}</td>
+    </tr>` 
+    items.push({"id":el.id,"txt":el.produ})    
+  }
+  document.querySelector("#listaDitem").innerHTML = outerHTML;
+  manejoColumnas("inventario") 
+  filter()
+}
+function filter(){
+  const text = document.getElementById("buscar").value.toUpperCase()
+  for (let i = 0; i < items.length; i++) {
+    const txtItm = items[i].txt.toUpperCase()
+    const idItm = items[i].id
+    if(txtItm.indexOf(text) > -1){ document.getElementById(idItm).style.display = "" }else{ document.getElementById(idItm).style.display = "none" }
+  }
+  localStorage.setItem("buscar",document.getElementById("buscar").value)
+}
+
+function editar(id){
+  localStorage.setItem('idItem', id);
+  lnk('../inventario/formEdit_inventario')
+}
+
+function limpiarBus(){
+  document.getElementById("buscar").value = ""
+  renderDatos() 
+}
+
+function init_m(){
+  document.getElementById("buscar").value = storage("buscar")
+  renderDatos()
+  openSocket()
+}   
+</script>
+</body>
+</html>

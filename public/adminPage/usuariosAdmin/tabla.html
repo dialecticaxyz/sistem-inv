@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es" >
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Lista Usuarios</title>
+<link rel="stylesheet" href="../css/estylo.css">
+</head>
+<style>
+</style>
+<body onload="startDB()">
+<div class="conteMenu">
+  <span class="icon back" onclick="window.history.back()"></span>
+  <div class="titMenu">Lista de Administradores</div>
+  <span class="icon cloud-download-alt" onclick="sincroDBusuario()"></span>
+</div>
+
+<div class="buscador">
+  <input class="input_ef" type="text" id="buscar" onkeyup="filter()" placeholder="Buscar por Nombre">  
+</div>
+
+<div class="contenTable" >
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Celular</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="listaDitem"></tbody>
+  </table>
+</div>
+
+<script src="../js/mainDB.js"></script>
+<script src="../js/apiBakend.js"></script>
+<script>
+var items
+async function renderTabla(){
+  let dat = await read_DB("usuario")
+  let outerHTML = '';
+  for (let i = 0; i < dat.length; i++) {
+    const el = dat[i];
+    outerHTML+=`
+    <tr id="${el.id}">
+      <td data-itm id="ref_${el.id}">${el.nom}</td>
+      <td>${el.cel}</td>
+      <td>
+        <span onclick="editarUser('${el.id}')" class="icon PEN">
+      </td>
+    </tr> `
+  }
+  document.getElementById("listaDitem").innerHTML = outerHTML 
+  items = document.querySelectorAll('[data-itm]')
+}
+
+function editarUser(id){
+  localStorage.setItem('userIDedit', id);
+  lnk("formEdit")
+}
+
+function init_m(){  
+  renderTabla() 
+}
+</script>
+</body>
+</html>

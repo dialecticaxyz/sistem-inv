@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" >
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>CONFIGURACION</title>
+<link rel="stylesheet" href="../css/estylo.css">
+<style>
+.btn-material{width: 100px;padding: 7px;}
+</style>  
+</head>
+<body onload="startDB();">
+<div class="conteMenu">
+  <span class="icon back" onclick="window.history.back()"></span>
+  <div class="titMenu">CAMBIO DE CONTRASEÑA</div>
+  <span></span>
+</div>
+
+<div class="formularioV1">
+  <div class="contInput">
+    <input  id="userU" class="input_ef" type="email" placeholder="" autocomplete="off"/>
+    <label class="label_ef">Usuario :</label>
+  </div>
+  <div class="contInput">
+    <input id="codUserA" class="input_ef" type="password" placeholder="" autocomplete="off"/>
+    <label class="label_ef">Contraseña anterior :</label>
+  </div>
+  <div class="contInput">
+    <input id="codUserN" class="input_ef" type="password" placeholder="" autocomplete="off"/>
+    <label class="label_ef">Contraseña nueva :</label>
+  </div>
+  <div class="botones">
+    <button class="btn-material verde" id="btnGuar" onclick="nuevoPasword()">Cambiar</button>
+    <button class="btn-material red" id="btnGuar" onclick="window.history.back()">Cancelar</button> 
+  </div> 
+</div>
+
+
+<script src="../js/apiBakend.js"></script>
+<script src="../js/mainDB.js"></script>
+<script>
+function init_m(){ }
+
+async function nuevoPasword(){
+  var r = confirm("Esta Seguro de Cambiar \n La contraseña");
+  if(r==true){
+    let newPas = document.getElementById("codUserN").value
+    if (newPas.indexOf(" ") !== -1) {
+      alert("La contraseña no puede contener espacios en blanco");
+      return false;
+    }
+    if (newPas.length < 5) {
+      alert("La contraseña debe contener mas de 6 caracteres");
+      return false;
+    }
+    if((new RegExp(/[&\/\\#,+()$~%.'":*?<>{}]/g,"i").test(newPas)) ){ 
+      alert("La contraseña solo debe contener letra o numeros");
+      return false;     
+    } 
+
+    let email = document.getElementById("userU").value
+    let pas = document.getElementById("codUserA").value
+    loadData() 
+    let up = await updatePasword({email,pas,newPas})
+    if("updatePasw"==up){ successDat(true) }
+     
+  }
+}
+
+</script>
+</body>
+</html>

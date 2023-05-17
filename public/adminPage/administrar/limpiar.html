@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedidos</title>
+<link href="../css/estylo.css" rel="stylesheet" type="text/css" media="all" />
+<style>
+.bs{text-align: end;}
+.contenTable{ height: calc(100vh - 100px);}
+.todoFecha{color: white;}
+.inputDate{ margin-bottom: 0px;margin-right: 10px;}
+.pickCalendar{ height: 25px;}
+#fechaVentas_Txt{color: white;}
+.fecha{display: flex;align-items: center;}
+.numNot{margin-right: 10px; width: 60px;}
+</style>
+</head>
+<body onload="startDB();">
+<div class="conteMenu">
+  <span class="icon back" onclick="window.history.back()"></span>
+  <div class="fecha">
+    <input class="numNot" id="numNot" type="number">
+    <span class="icon save"  onclick="writeNumNot()" ></span>
+  </div>
+  <select data-filvent id="vendedores" onchange="saveText(event)"></select>
+  <div class="fecha">
+    <div class="inputDate">
+      <div id="fechaVentas_Txt"></div>
+      <input data-filvent id="fechaVentas" onchange="saveText(event)" class="pickCalendar" type='date'/>
+    </div>
+    <div>
+      <label class="todoFecha" for="todoFecha">Todos Dias</label>
+      <input data-filvent type="checkbox" onchange="checkbox(event)" id="todoFecha" >  
+    </div>
+  </div>
+  <span class="icon borrarWite" onclick="borrarMarc()"></span>  
+  <span onclick="listVer()" class="icon menuSvg ojo"></span>  
+</div>  
+
+<div id="contedOcultador" class="contedOcultador"></div>
+
+<div class="contenTable">
+  <table onclick="oculVer()">
+    <thead>
+      <tr id="headColm">
+        <th>N°</th>
+        <th onclick="ordenar('vendedor','p')">Vendedor</th>
+        <th onclick="ordenar('cli','p')">Cliente</th>
+        <th onclick="ordenar('acuenta','n')">Acuenta</th>
+        <th onclick="ordenar('saldo','n')">Saldo</th>
+        <th onclick="ordenar('venta_tot','n')">Total</th>
+        <th onclick="ordenar('fechVent','p')">fecha</th>
+        <th>Borrar</th>
+      </tr>
+    </thead>
+    <tbody id="listaDitem"></tbody>
+  </table>
+</div>
+
+<script src="../js/apiBakend.js"></script>
+<script src="../js/mainDB.js"></script>
+<script>
+async function cargaVendedores(){
+  let dat = await read_DB('vendedor')
+  let outerHTMLvendor = `<option value="todo">Todo</option>`;
+  for (let i = 0; i < dat.length; i++) {
+    const el = dat[i];
+    outerHTMLvendor += `<option value="${el.nom}">${el.nom}</option> `
+  }
+  document.querySelector("#vendedores").innerHTML = outerHTMLvendor;
+  filtroVenDate()
+  json_to_from("filvent")
+}
+
+var listVen = []
+async function filtroVenDate(){
+  listVen = []
+  let dat = await read_DB('ventas')
+  for (let i = 0; i < dat.length; i++) {
+    const el = dat[i];
+
+    let vendor = storage("vendedores")==""?"todo":storage("vendedores")
+    let fecha = storage("diaFiltro")==""?"todo":storage("diaFiltro")
+    let todFech =  storage("todoFecha")==""?"true":storage("todoFecha")
+    if(todFech=="true"){
+      if(vendor == "todo"){
+        listVen.push(el)
+      }else{ if(el.usuario == vendor){ listVen.push(el) } }
+    }else{
+      if(el.fechVent==fecha){
+        if(vendor == "todo"){
+          listVen.push(el)
+        }else{ if(el.usuario == vendor){ listVen.push(el) } }
+      }
+    }
+  }
+
+  render(listVen) 
+}
+var items
+async function render(d){
+  let dat = d==undefined?await read_DB('ventas'):d
+  dat.sort(((a, b) => b.fechVent - a.fechVent));
+  var outerHTML = '';
+  for (let i = 0; i < dat.length; i++) {
+    const el = dat[i];
+    outerHTML += 
+    `<tr id="${el.id}">
+      <td>${i+1}</td>
+      <td>${(el.dataVenden).nom}</td>
+      <td data-itm id="ref_${el.id}">${(el.cliente).cli}</td>
+      <td class="bs">${el.acuenta}</td>
+      <td class="bs">${el.saldo}</td>
+      <td class="bs">${el.total}</td>
+      <td>${timeToMesDia(el.fechVent)}</td>
+      <td>
+        <input type="checkbox" onclick="borrarArr('${el.id}')">
+      </td>
+    </tr>`
+  }
+  document.querySelector("#listaDitem").innerHTML = outerHTML;
+  items = document.querySelectorAll('[data-itm]')
+  manejoColumnas("tablaBorrar")
+}
+
+let ids = []
+function borrarArr(id){ ids.push(id)}
+
+async function borrarMarc(){
+  var r = prompt("Esta Seguro de borrar marcados..?")
+  if(r=="borrar"){
+    loadData()
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      let del = await del_ventaMarc(id)
+      if(del=="delet"){ 
+        let delLoc = await del_DB(id,'ventas')
+        console.log("eleiminando..!!")
+      }  
+    }
+    successDat(true)
+  } 
+}
+
+async function writeNumNot(){
+  var r = prompt("Esta Seguro de editar..?")
+  if(r=="si"){
+    loadData()
+    var num  =  document.getElementById("numNot").value
+    let crea = await write_numNota({numNota:num})
+    if(crea=="write"){ successDat() }    
+  }
+}
+
+async function init_m(){ 
+  cargaVendedores() 
+  let num = await read_numNota()
+  document.getElementById("numNot").value = num
+}   
+
+async function ordenar(col,type){///sortTable
+  let dat = await read_DB('ventas')
+  let d = sortTable(col,type,dat)
+  filtroVenDate(d)
+}
+
+</script>
+</body>
+</html>

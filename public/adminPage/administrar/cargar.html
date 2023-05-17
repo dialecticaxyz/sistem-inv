@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedidos</title>
+<link href="../css/estylo.css" rel="stylesheet" type="text/css" media="all" />
+<style>
+.bs{text-align: end;}
+.contenTable{ height: calc(100vh - 50px);}
+.inputDate{ margin-bottom: 0px;}
+.pickCalendar{ height: 25px;}
+#semana_Txt{color: white;}
+.btn-material{margin: unset;}
+</style>
+</head>
+<body onload="startDB();">
+<div class="conteMenu">
+  <span class="icon back" onclick="window.history.back()"></span>
+  <div>
+	  <label for="archivo" class="btn-material">Archivo</label>
+	  <input type="file" name="archivo" id="archivo" onchange="verArc(event)" style="display: none;">
+	</div>
+  <div id="semana_Txt">Fecha</div>
+  <span class="btn-material" onclick="guardar()">Guardar</span>
+  <span onclick="listVer()" class="icon menuSvg ojo"></span>  
+</div>  
+
+<div id="contedOcultador" class="contedOcultador"></div>
+
+<div class="contenTable">
+  <table onclick="oculVer()">
+    <thead>
+      <tr id="headColm">
+        <th>N°</th>
+        <th onclick="sortVent()">Vendedor</th>
+        <th>Cliente</th>
+        <th>Acuenta</th>
+        <th>Saldo</th>
+        <th>Total</th>
+        <th onclick="sortFech()">fecha</th>
+      </tr>
+    </thead>
+    <tbody id="listaDitem"></tbody>
+  </table>
+</div>
+
+<script src="../js/apiBakend.js"></script>
+<script src="../js/mainDB.js"></script>
+<script>
+function verArc(e){
+  var archivo = e.target.files[0];
+  if (!archivo) { return; }
+  var lector = new FileReader();
+  lector.onload = function(e) {
+    var contenido = e.target.result;
+    render(JSON.parse(contenido));
+    document.getElementById("semana_Txt").textContent = archivo.name.split(".")[0]
+  };
+  lector.readAsText(archivo)
+}
+
+var items
+let datos
+async function render(dat){
+  datos = dat
+  dat.sort(((a, b) => b.fechVent - a.fechVent));
+  var outerHTML = '';
+  for (let i = 0; i < dat.length; i++) {
+    const el = dat[i];
+    outerHTML += 
+    `<tr id="${el.id}">
+      <td>${i+1}</td>
+      <td>${(el.dataVenden).nom}</td>
+      <td data-itm id="ref_${el.id}">${(el.cliente).cli}</td>
+      <td class="bs">${el.acuenta}</td>
+      <td class="bs">${el.saldo}</td>
+      <td class="bs">${el.total}</td>
+      <td>${timeToMesDia(el.fechVent)}</td>
+    </tr>`
+  }
+  document.querySelector("#listaDitem").innerHTML = outerHTML;
+  items = document.querySelectorAll('[data-itm]')
+  manejoColumnas("archivo")
+}
+
+function verPdf(idVent){
+  localStorage.setItem('idVenta', idVent);
+  lnk("../pedidos/pdfVenta")
+}
+
+async function guardar(){
+  loadData()
+  for (let i = 0; i < datos.length; i++) {
+    let item = datos[i];
+    let v_reg = await write_DB(item,'ventas')
+    let arch = await write_DB(item,'archivo')//archivo
+    let timeLocal = storage("timeVEN")==""?0:parseInt(storage("timeVEN"))
+    if(item["time"]>timeLocal){ localStorage.setItem("timeVEN",item["time"]) }
+  }
+  successDat()
+}
+
+function init_m(){ }   
+</script>
+</body>
+</html>

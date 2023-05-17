@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es" >
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>REGISTRAR</title>
+<link rel="stylesheet" href="../css/estylo.css">
+</head>
+<style>
+.btn-material{width: 100px;padding: 7px;}
+#regContra{background-color: rgb(54, 255, 47);padding: 15px;border-radius: 5px}
+</style>
+<body onload="startDB()">
+<div class="conteMenu">
+  <span></span>
+  <div class="titMenu">REGISTRAR CONTRASEÑA</div>
+  <span></span>
+</div>
+
+<div class="formularioV1">
+  <div class="tituloForm">{{userName}}</div>
+  {{#if input}}
+    <div class="contInput">
+      <input data-user  id="password" class="input_ef" type="password" placeholder="" />
+      <label class="label_ef">Contraseña</label>
+    </div>
+    <div  class="contInput">
+      <input data-user id="passwordR" class="input_ef" type="password" placeholder="" />
+      <label class="label_ef">Repetir Contraseña </label>
+    </div>
+    <div class="botones">
+      <button class="btn-material info" id="btnGuar" onclick="guardarPasword()">Guardar</button>
+    </div>
+    <div id="regContra" class="tituloForm" style="display:none;">Contraseña Registrada</div>
+  {{else}}
+    <div class="tituloForm">{{txt}}</div>
+  {{/if}}
+</div>
+
+<script src="/js/mainDB.js"></script>
+<script>
+
+{{#if input}}  
+const url = "http://127.0.0.1"  
+function createdPasword(dat,tkn){
+  return new Promise(function(resolve,reject){
+    fetch(url+`/createdPasword`,{method:'post',headers:{'Accept':'application/json,text/plain','Content-Type':'application/json','x-access-token':tkn},
+      body: JSON.stringify(dat)
+      }).then(rsp=>{ if(rsp.ok){ rsp.text().then(data=>{ resolve(data) }) }  }
+    );
+  })
+}  
+let tok
+
+async function guardarPasword(){
+  let r = confirm("esta seguro de Registrar la contraseña ..?")
+  if(r){
+    loadData()
+    let password = document.getElementById("password").value
+    let reg = await createdPasword({"password":password},tok)
+    if(reg=="createdPasw"){
+      document.getElementById("regContra").style.display=""
+      document.getElementById("btnGuar").classList.add("hiden")
+    }
+    if(reg=="existsPasw"){
+      document.getElementById("regContra").style.display=""
+      document.getElementById("regContra").textContent = "Ya existe una contraseña Registrada"
+      document.getElementById("btnGuar").classList.add("hiden")
+    }
+    successDat()
+  }
+}
+{{/if}}
+
+async function init_m(){ 
+  let URLactual = window.location.href.split("/");
+  tok = URLactual[URLactual.length-1];
+}
+</script>
+</body>
+</html>

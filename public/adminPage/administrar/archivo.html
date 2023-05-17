@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedidos</title>
+<link href="../css/estylo.css" rel="stylesheet" type="text/css" media="all" />
+<style>
+.bs{text-align: end;}
+.contenTable{ height: calc(100vh - 50px);}
+.todoFecha{color: white;}
+.inputDate{ margin-bottom: 0px;}
+.pickCalendar{ height: 25px;}
+#fechaVentas_Txt{color: white;}
+</style>
+</head>
+<body onload="startDB();">
+<div class="conteMenu">
+  <span class="icon back" onclick="window.history.back()"></span>
+  <select data-filvent id="vendedores" onchange="saveText(event,true)"></select>
+  <div class="inputDate">
+    <div id="fechaVentas_Txt"></div>
+    <input data-filvent id="fechaVentas" onchange="saveText(event,true)" class="pickCalendar" type='date'/>
+  </div>
+  <div>
+    <label class="todoFecha" for="todoFecha">Todos Dias</label>
+    <input data-filvent type="checkbox" onchange="checkbox(event,true)" id="todoFecha" >  
+  </div>
+  <span onclick="listVer()" class="icon menuSvg ojo"></span>  
+</div>  
+
+<div id="contedOcultador" class="contedOcultador"></div>
+
+<div class="contenTable">
+  <table onclick="oculVer()">
+    <thead>
+      <tr id="headColm">
+        <th>N°</th>
+        <th onclick="sortVent()">Vendedor</th>
+        <th>Cliente</th>
+        <th>Acuenta</th>
+        <th>Saldo</th>
+        <th>Total</th>
+        <th onclick="sortFech()">fecha</th>
+        <th>pdf</th>
+      </tr>
+    </thead>
+    <tbody id="listaDitem"></tbody>
+  </table>
+</div>
+
+<script src="../js/apiBakend.js"></script>
+<script src="../js/mainDB.js"></script>
+<script>
+async function cargaVendedores(){
+  let dat = await read_DB('vendedor')
+  let outerHTMLvendor = `<option value="todos">Todos</option>`;
+  for (let i = 0; i < dat.length; i++) {
+    const el = dat[i];
+    outerHTMLvendor += `<option value="${el.nom}">${el.nom}</option> `
+  }
+  document.querySelector("#vendedores").innerHTML = outerHTMLvendor;
+  filtroVenDate()
+  json_to_from("filvent")
+}
+
+var listVen = []
+async function filtroVenDate(d){
+  listVen = []
+  let dat = d==undefined?await read_DB('archivo'):d
+  let df = storageJson("filvent")
+  for (let i = 0; i < dat.length; i++) {
+    const el = dat[i];
+
+    if(df["vendedores"]!=undefined&&df["vendedores"]!="todos"){
+      if((el.dataVenden).nom==df["vendedores"]){listVen.push(el)}
+    }else{listVen.push(el)}
+
+    if(!(df["todoFecha"]!=undefined&&df["todoFecha"]==true)){
+      let elm = listVen.find( item => item.id === el.id )
+      if(elm!=undefined){
+        if(document.getElementById("fechaVentas").value!=dateTOinput(elm.fechVent)){
+          listVen = listVen.filter((item) => item.id !== el.id);
+        }
+      }
+    }
+
+  }
+  render(listVen) 
+}
+var items
+async function render(d){
+  let dat = d==undefined?await read_DB('archivo'):d
+  dat.sort(((a, b) => b.fechVent - a.fechVent));
+  var outerHTML = '';
+  for (let i = 0; i < dat.length; i++) {
+    const el = dat[i];
+    outerHTML += 
+    `<tr id="${el.id}">
+      <td>${i+1}</td>
+      <td>${(el.dataVenden).nom}</td>
+      <td data-itm id="ref_${el.id}">${(el.cliente).cli}</td>
+      <td class="bs">${el.acuenta}</td>
+      <td class="bs">${el.saldo}</td>
+      <td class="bs">${el.total}</td>
+      <td>${timeToMesDia(el.fechVent)}</td>
+      <td>
+        <span onclick="verPdf('${el.id}')" class="icon pdf1">
+      </td>
+    </tr>`
+  }
+  document.querySelector("#listaDitem").innerHTML = outerHTML;
+  items = document.querySelectorAll('[data-itm]')
+  manejoColumnas("tablaArchivo")
+}
+
+function verPdf(idVent){
+  localStorage.setItem('idVenta', idVent);
+  lnk("../pedidos/pdfVenta")
+}
+
+function init_m(){ 
+  cargaVendedores() 
+}   
+
+</script>
+</body>
+</html>
